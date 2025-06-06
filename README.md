@@ -194,7 +194,7 @@ O modelo de IA detecta as seguintes condições pulmonares:
 
 ## 🔗 Repositório Relacionado
 
-- **Frontend**: [lungscan-frontend](https://github.com/Buscavan/lungscan-frontend)
+- **Frontend**: [lungscan-frontend](https://github.com/lungscan/lungscan-frontend)
 
 ## 🚀 Implantação
 
