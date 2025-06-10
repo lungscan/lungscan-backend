@@ -4,6 +4,7 @@ import traceback
 from flask import jsonify, current_app, request
 from typing import Dict
 from . import api_v1
+from src.extensions import limiter
 
 
 @api_v1.route("/health")
@@ -38,6 +39,7 @@ def get_pathologies():
 
 
 @api_v1.route('/analyze', methods=['POST'])
+@limiter.limit("10 per minute")
 def analyze_lung_scan():
     """
     Analyze lung X-ray image for pathologies.

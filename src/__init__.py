@@ -3,6 +3,7 @@ from flask_cors import CORS
 
 from src.config import DevelopmentConfig, ProductionConfig
 from src.api.v1.endpoints import api_v1
+from src.extensions import limiter
 
 from src.model.lung_analyzer import LungAnalyzer
 
@@ -19,6 +20,9 @@ def create_app(config_name="development"):
 
     # Enable CORS
     CORS(app, resources={r"/api/*": {"origins": app.config.get("CORS_ORIGINS", "*")}})
+
+    # Initialize extensions
+    limiter.init_app(app)
 
     # Initialize lung analyzer model
     initialize_model(app)
