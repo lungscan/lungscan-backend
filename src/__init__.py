@@ -4,6 +4,8 @@ from flask_cors import CORS
 from src.config import DevelopmentConfig, ProductionConfig
 from src.api.v1.endpoints import api_v1
 
+from src.model.lung_analyzer import LungAnalyzer
+
 def create_app(config_name="development"):
     """
     Creates and configures the Flask application.
@@ -17,6 +19,9 @@ def create_app(config_name="development"):
 
     # Enable CORS
     CORS(app, resources={r"/api/*": {"origins": app.config.get("CORS_ORIGINS", "*")}})
+
+    # Initialize lung analyzer model
+    initialize_model(app)
 
     # Register blueprints
     app.register_blueprint(api_v1, url_prefix="/api/v1")
@@ -35,3 +40,20 @@ def create_app(config_name="development"):
         }
 
     return app
+
+def initialize_model(app: Flask) -> None:
+    """
+    Initialize the lung analyzer model and attach it to the app.
+
+    Args:
+        app: Flask application instance
+    """
+    try:
+        app.logger.info("Loading lung analyzer model...")
+        model_name = app.config.get('MODEL_NAME', 'densenet121-res224-all')
+        app.lung_analyzer = LungAnalyzer(model_name=model_name)
+        app.logger.info("Lung analyzer model loaded successfully")
+
+    except Exception as e:
+        app.logger.error(f"Failed to load lung analyzer model: {str(e)}")
+        raise RuntimeError(f"Model initialization failed: {str(e)}")
