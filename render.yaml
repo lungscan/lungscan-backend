@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: lungscan-backend
+    env: docker
+    plan: free
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "https://lungscan.vercel.app/"
