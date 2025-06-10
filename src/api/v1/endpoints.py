@@ -1,8 +1,9 @@
 import datetime
 
-from flask import jsonify
+from flask import jsonify, current_app
 
 from . import api_v1
+
 
 @api_v1.route("/health")
 def health():
@@ -14,12 +15,22 @@ def health():
         }
     )
 
+
 @api_v1.route("/pathologies")
 def get_pathologies():
     """Returns the list of supported pathologies."""
-    pathologies = [
-        "Atelectasis", "Cardiomegaly", "Effusion", "Infiltration", "Mass",
-        "Nodule", "Pneumonia", "Pneumothorax", "Consolidation", "Edema",
-        "Emphysema", "Fibrosis", "Pleural Thickening", "Hernia"
-    ]
-    return jsonify({"pathologies": pathologies})
+    try:
+        lung_analyzer = current_app.lung_analyzer
+        pathologies = lung_analyzer.get_pathologies()
+
+        return jsonify({
+            'success': True,
+            'pathologies': pathologies,
+            'count': len(pathologies)
+        })
+
+    except Exception as e:
+        return jsonify({
+            'error': 'Failed to retrieve pathologies',
+            'message': str(e)
+        }), 500
