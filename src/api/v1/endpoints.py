@@ -121,9 +121,7 @@ def analyze_lung_scan():
 @api_v1.route('/get_images', methods=['GET'])
 def get_random_image():
     try:
-        # Direct path calculation
         current_file = os.path.abspath(__file__)
-        # Remove the filename and go up 3 directories
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
         images_folder = os.path.join(project_root, 'images')
         
