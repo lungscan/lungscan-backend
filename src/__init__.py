@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 
 from src.config import DevelopmentConfig, ProductionConfig
@@ -42,6 +42,57 @@ def create_app(config_name="development"):
                 "random_image": "/api/v1/random-image",
             },
         }
+
+    # Error handlers
+    @app.errorhandler(400)
+    def handle_400(error):
+        return jsonify({
+            "error": "Bad Request",
+            "message": error.description if hasattr(error, "description") else "Invalid request"
+        }), 400
+
+    @app.errorhandler(401)
+    def handle_401(error):
+        return jsonify({
+            "error": "Unauthorized",
+            "message": error.description if hasattr(error, "description") else "Authentication required"
+        }), 401
+
+    @app.errorhandler(404)
+    def handle_404(error):
+        return jsonify({
+            "error": "Not Found",
+            "message": error.description if hasattr(error, "description") else "The requested resource was not found"
+        }), 404
+
+    @app.errorhandler(413)
+    def handle_413(error):
+        return jsonify({
+            "error": "Payload Too Large",
+            "message": "The uploaded file is too large"
+        }), 413
+
+    @app.errorhandler(415)
+    def handle_415(error):
+        return jsonify({
+            "error": "Unsupported Media Type",
+            "message": "The media type of the request is not supported"
+        }), 415
+
+    @app.errorhandler(500)
+    def handle_500(error):
+        return jsonify({
+            "error": "Internal Server Error",
+            "message": "An internal server error occurred"
+        }), 500
+
+    @app.errorhandler(Exception)
+    def handle_exception(error):
+        app.logger.exception("Unhandled Exception: %s", str(error))
+        return jsonify({
+            "error": "Internal Server Error",
+            "message": "An unexpected error occurred"
+        }), 500
 
     return app
 
