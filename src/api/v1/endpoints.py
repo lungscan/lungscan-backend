@@ -133,7 +133,7 @@ def analyze_lung_scan():
             'message': 'An unexpected error occurred during image analysis'
         }), 500
 
-@api_v1.route('/get_images', methods=['GET'])
+@api_v1.route('/random-image', methods=['GET'])
 def get_random_image():
     try:
         current_file = os.path.abspath(__file__)
