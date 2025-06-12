@@ -16,7 +16,7 @@ def health():
     return jsonify(
         {
             "status": "healthy",
-            "timestamp": datetime.datetime.now(datetime.UTC),
+            "timestamp": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
         }
     )
 
