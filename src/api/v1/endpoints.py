@@ -75,7 +75,7 @@ def analyze_lung_scan():
             return jsonify({
                 'error': 'Invalid file type',
                 'message': f'Allowed file types: {", ".join(allowed_extensions)}'
-            }), 400
+            }), 415
 
         extension = os.path.splitext(file.filename)[1].lower()
 

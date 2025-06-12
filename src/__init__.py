@@ -51,13 +51,6 @@ def create_app(config_name="development"):
             "message": error.description if hasattr(error, "description") else "Invalid request"
         }), 400
 
-    @app.errorhandler(401)
-    def handle_401(error):
-        return jsonify({
-            "error": "Unauthorized",
-            "message": error.description if hasattr(error, "description") else "Authentication required"
-        }), 401
-
     @app.errorhandler(404)
     def handle_404(error):
         return jsonify({
