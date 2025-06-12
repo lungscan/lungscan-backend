@@ -1,10 +1,13 @@
 import datetime
 import traceback
+import os
+import random
 
-from flask import jsonify, current_app, request
+from flask import jsonify, current_app, request, send_file
 from typing import Dict
 from . import api_v1
 from src.extensions import limiter
+
 
 
 @api_v1.route("/health")
@@ -115,6 +118,45 @@ def analyze_lung_scan():
             'message': 'An unexpected error occurred during image analysis'
         }), 500
 
+@api_v1.route('/get_images', methods=['GET'])
+def get_random_image():
+    try:
+        # Direct path calculation
+        current_file = os.path.abspath(__file__)
+        # Remove the filename and go up 3 directories
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_file)))
+        images_folder = os.path.join(project_root, 'images')
+        
+        if not os.path.exists(images_folder):
+            return jsonify({'error': f'Images folder not found at: {images_folder}'}), 404
+        
+        supported_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}
+        
+        image_files = [
+            f for f in os.listdir(images_folder) 
+            if os.path.splitext(f)[1].lower() in supported_extensions
+        ]
+        
+        if not image_files:
+            return jsonify({'error': 'No images available'}), 404
+
+        random_image = random.choice(image_files)
+        image_path = os.path.join(images_folder, random_image)
+        
+        ext = os.path.splitext(random_image)[1].lower()
+        mimetype = {
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.gif': 'image/gif',
+            '.bmp': 'image/bmp',
+            '.webp': 'image/webp'
+        }.get(ext, 'image/png')
+
+        return send_file(image_path, mimetype=mimetype, as_attachment=False)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 def _allowed_file(filename: str, allowed_extensions: set) -> bool:
     """Check if file has allowed extension."""
