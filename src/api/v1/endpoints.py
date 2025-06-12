@@ -3,12 +3,12 @@ import traceback
 import os
 import random
 
+import pydicom
 from flask import jsonify, current_app, request, send_file
 from typing import Dict
 from . import api_v1
 from src.extensions import limiter
-
-
+import numpy as np
 
 @api_v1.route("/health")
 def health():
@@ -19,7 +19,6 @@ def health():
             "timestamp": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
         }
     )
-
 
 @api_v1.route("/pathologies")
 def get_pathologies():
@@ -40,18 +39,18 @@ def get_pathologies():
             'message': str(e)
         }), 500
 
-
 @api_v1.route('/analyze', methods=['POST'])
 @limiter.limit("10 per minute")
 def analyze_lung_scan():
     """
-    Analyze lung X-ray image for pathologies.
+    Analyze lung X-ray image (including .dcm) for pathologies.
 
     Expects:
         - Image file in multipart form data with key 'image'
+        - Accepted formats: png, jpg, jpeg, bmp, gif, tiff, dcm (DICOM)
 
     Returns:
-        JSON response with pathology predictions
+        JSON response with pathology predictions and model metadata.
     """
     try:
         # Check if image file is present
@@ -71,15 +70,31 @@ def analyze_lung_scan():
             }), 400
 
         # Validate file type
-        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff'}
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'dcm'}
         if not _allowed_file(file.filename, allowed_extensions):
             return jsonify({
                 'error': 'Invalid file type',
                 'message': f'Allowed file types: {", ".join(allowed_extensions)}'
             }), 400
 
-        # Read image data
-        image_data = file.read()
+        extension = os.path.splitext(file.filename)[1].lower()
+
+        if extension == '.dcm':
+            try:
+                dicom_data = pydicom.dcmread(file)
+                image_array = dicom_data.pixel_array.astype(np.float32)
+                image_array -= np.min(image_array)
+                image_array /= np.max(image_array)
+                image_array *= 255.0
+                image_array = image_array.astype(np.uint8)
+                image_data = image_array
+            except Exception as e:
+                return jsonify({
+                    'error': 'DICOM processing error',
+                    'message': str(e)
+                }), 400
+        else:
+            image_data = file.read()
 
         # Get the lung analyzer from app context
         lung_analyzer = current_app.lung_analyzer
@@ -128,7 +143,7 @@ def get_random_image():
         if not os.path.exists(images_folder):
             return jsonify({'error': f'Images folder not found at: {images_folder}'}), 404
         
-        supported_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}
+        supported_extensions = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', 'dcm'}
         
         image_files = [
             f for f in os.listdir(images_folder) 
@@ -148,8 +163,9 @@ def get_random_image():
             '.jpeg': 'image/jpeg',
             '.gif': 'image/gif',
             '.bmp': 'image/bmp',
-            '.webp': 'image/webp'
-        }.get(ext, 'image/png')
+            '.webp': 'image/webp',
+            '.dcm': 'application/dicom'
+        }.get(ext, 'application/octet-stream')
 
         return send_file(image_path, mimetype=mimetype, as_attachment=False)
 
